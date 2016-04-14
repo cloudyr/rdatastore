@@ -23,6 +23,10 @@ Commit a single entity to the datastore.
 Specify a \code{kind} and optionally a \code{name} (setting \code{name = NULL} will result in an id being assigned as a substitute for name).
 Additional arguments are treated as properties of the entity. \code{mutation_type} can be set to one of the following:
 }
+\examples{
+commit("test", "entity_name", int_column = as.integer(1), str_column = "awesome!", float_column = 3.14)
+
+}
 \seealso{
 \url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys
 }

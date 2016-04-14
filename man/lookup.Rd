@@ -21,6 +21,10 @@ dataframe of entity.
 \description{
 Lookup
 }
+\examples{
+lookup("test", "m")
+
+}
 \seealso{
 \url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys
 }
