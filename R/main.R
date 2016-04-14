@@ -174,6 +174,11 @@ lookup <- function(kind, name = NULL, id = NULL) {
   values <- resp$entity$properties
   results <- resp$entity$properties
 
+  # Return transaction id if successful, else error.
+  if (req$status_code != 200) {
+    stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
+  }
+
   # Convert Variable types and return as data frame.
   results <- format_from_results(results)
   dplyr::tbl_df(as.data.frame(results, stringsAsFactors = F))
@@ -223,6 +228,6 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert") {
   if (req$status_code == 200) {
     transaction_id
   } else {
-    stop(paste0(content(req)$error$code, ": ", content(req)$error$message))
+    stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
   }
 }
