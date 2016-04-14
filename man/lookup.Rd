@@ -9,7 +9,9 @@ lookup(kind, name = NULL, id = NULL)
 \arguments{
 \item{kind}{The entity kind}
 
-\item{name}{The name or id}
+\item{name}{The entity name.}
+
+\item{id}{The entity id.}
 
 \item{project}{Google cloud platform project id/name.}
 }

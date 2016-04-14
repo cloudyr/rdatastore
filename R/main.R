@@ -139,7 +139,8 @@ authenticate_service_account <- function(credentials, project) {
 #' Lookup
 #'
 #' @param kind The entity kind
-#' @param name The name or id
+#' @param name The entity name.
+#' @param id The entity id.
 #' @param project Google cloud platform project id/name.
 #'
 #' @seealso \url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys
