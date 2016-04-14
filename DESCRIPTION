@@ -11,5 +11,6 @@ Imports:
     dplyr,
     lubridate,
     httr,
-    jsonlite,
-    testhat
+    jsonlite
+Remotes:
+    hadley/testthat
