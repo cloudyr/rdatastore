@@ -1,7 +1,14 @@
-
+# Constants
 Rdatastore <- new.env()
 datastore_url <- "https://www.googleapis.com/auth/datastore"
+datastore_types <- list("integer" = "integerValue",
+                        "double" = "doubleValue",
+                        "character" = "stringValue",
+                        "logical" = "booleanValue",
+                        "NULL" = "nullValue",
+                        "date" = "timestampValue")
 
+# Utility Functions
 format_from_results <- function(results) {
   properties <- lapply(names(results), function(var_name, var_value) {
     var_type <- names(results[[var_name]])
@@ -34,12 +41,6 @@ format_from_results <- function(results) {
   properties
 }
 
-datastore_types <- list("integer" = "integerValue",
-                        "double" = "doubleValue",
-                        "character" = "stringValue",
-                        "logical" = "booleanValue",
-                        "NULL" = "nullValue",
-                        "date" = "timestampValue")
 
 format_to_properties <- function(properties) {
   # Format a list in R into nested list
@@ -56,6 +57,15 @@ format_to_properties <- function(properties) {
     prop[[var_type]] = var_value
     prop
   }, SIMPLIFY = FALSE)
+}
+
+
+# Return transaction ID
+transaction <- function() {
+  req <- httr::POST(paste0(Rdatastore$url, ":beginTransaction"),
+                    httr::config(token = Rdatastore$token),
+                    encode = "json")
+  httr::content(req)$transaction
 }
 
 
@@ -174,21 +184,6 @@ lookup <- function(kind, name = NULL, id = NULL) {
   # Convert Variable types and return as data frame.
   results <- format_from_results(results)
   dplyr::tbl_df(as.data.frame(results, stringsAsFactors = F))
-}
-
-
-
-#' Transaction
-#'
-#' Return transaction ID.
-#'
-#'
-
-transaction <- function() {
-  req <- httr::POST(paste0(Rdatastore$url, ":beginTransaction"),
-                    httr::config(token = Rdatastore$token),
-                    encode = "json")
-  httr::content(req)$transaction
 }
 
 
