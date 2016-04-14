@@ -1,5 +1,6 @@
 
 Rdatastore <- new.env()
+datastore_url <- "https://www.googleapis.com/auth/datastore"
 
 format_from_results <- function(results) {
   properties <- lapply(names(results), function(var_name, var_value) {
@@ -60,7 +61,7 @@ format_to_properties <- function(properties) {
 
 #' Authenticate Datastore
 #'
-#' Authenticate datastore. Create an application on the
+#' Authenticate datastore using OAuth 2.0. Create an application on the
 #' \strong{google cloud platform}
 #' and generate
 #'
@@ -80,7 +81,6 @@ authenticate_datastore <- function(key, secret, project) {
                      key = key,
                      secret = secret)
 
-  datastore_url <- "https://www.googleapis.com/auth/datastore"
   # Fetch token
   google_token <- httr::oauth2.0_token(httr::oauth_endpoints("google"),
                                        app,
@@ -99,6 +99,42 @@ if (file.exists("credentials.json")) {
                          project = credentials$project)
 }
 
+#' Authenticate Datastore using a service account
+#'
+#' Set credentials to the name of an environmental variable
+#' or the location of your service account json key file.
+#'
+#' @param credentials Environmental variable or service account.
+#' @param project Google cloud platform project id/name.
+#'
+#' @seealso \url{https://cloud.google.com/}
+#' @seealso \url{https://cloud.google.com/datastore/docs/concepts/overview}
+#' @seealso \url{https://developers.google.com/identity/protocols/OAuth2#basicsteps}
+#'
+#' @export
+
+
+authenticate_service_account <- function(credentials, project) {
+
+  # Locate Credentials
+  if (file.exists(as.character(credentials))) {
+    credentials <- jsonlite::fromJSON(credentials)
+  } else if (Sys.getenv(credentials) != "") {
+    credentials <- jsonlite::fromJSON(Sys.getenv(credentials))
+  } else {
+    stop("Could not find credentials")
+  }
+
+  google_token <- httr::oauth_service_token(httr::oauth_endpoints("google"),
+                            credentials,
+                            scope = datastore_url)
+
+  url <- paste0("https://datastore.googleapis.com/v1beta3/projects/", project)
+  # Create global variable for project id
+  assign("project_id", project, envir=Rdatastore)
+  assign("token", google_token, envir=Rdatastore)
+  assign("url", url, envir=Rdatastore)
+}
 
 #' Lookup
 #'
@@ -175,6 +211,8 @@ transaction <- function() {
 
 commit <- function(kind, name = NULL, ..., mutation_type = "upsert") {
 
+  transaction_id <- transaction()
+
   # Generate mutation
   mutation = list()
   mutation[[mutation_type]] =  c(
@@ -188,7 +226,7 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert") {
 
 
   body <- list(mutations = mutation,
-               transaction = transaction()
+               transaction = transaction_id
                )
 
   req <- httr::POST(paste0(Rdatastore$url, ":commit"),

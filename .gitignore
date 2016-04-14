@@ -4,3 +4,4 @@ credentials.json
 .RData
 .Ruserdata
 .httr-oauth
+*.json
