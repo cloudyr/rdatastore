@@ -53,21 +53,6 @@ if (file.exists("credentials.json")) {
 #'
 #' @export
 
-
-list_to_df <- function(listfordf){
-  if(!is.list(named.list)) stop("it should be a list")
-
-  df <- list(list.element = listfordf)
-  class(df) <- c("tbl_df", "data.frame")
-  attr(df, "row.names") <- .set_row_names(length(listfordf))
-
-  if (!is.null(names(listfordf))) {
-    df$name <- names(listfordf)
-  }
-
-  df
-}
-
 lookup <- function(kind, name = NULL, id = NULL) {
 
   if(all(is.null(name), is.null(id))) {
