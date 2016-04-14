@@ -179,13 +179,9 @@ lookup <- function(kind, name = NULL, id = NULL) {
 
 #' Transaction
 #'
-#' @param kind The entity kind
-#' @param name The name or id
-#' @param ... Additional properties to store
+#' Return transaction ID.
 #'
-#' @seealso \url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys
 #'
-#' @export
 
 transaction <- function() {
   req <- httr::POST(paste0(Rdatastore$url, ":beginTransaction"),

@@ -6,17 +6,7 @@
 \usage{
 transaction()
 }
-\arguments{
-\item{kind}{The entity kind}
-
-\item{name}{The name or id}
-
-\item{...}{Additional properties to store}
-}
 \description{
-Transaction
-}
-\seealso{
-\url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys
+Return transaction ID.
 }
 
