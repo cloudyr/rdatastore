@@ -1,3 +1,3 @@
 library(testthat)
 
-test_check("Rdatastore")
+test_check("rdatastore")
