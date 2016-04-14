@@ -15,8 +15,16 @@ commit(kind, name = NULL, ..., mutation_type = "upsert")
 
 \item{mutation_type}{The type of mutation. One of \strong{insert}, \strong{update}, \strong{upsert}, or \strong{delete}. Default is upsert.}
 }
+\value{
+transaction_id
+}
 \description{
 Commit a single entity to the datastore.
+Specify a \code{kind} and optionally a \code{name} (setting \code{name = NULL} will result in an id being assigned as a substitute for name).
+}
+\examples{
+commit("test", "entity_name", int_column = as.integer(1), str_column = "awesome!", float_column = 3.14)
+
 }
 \seealso{
 \url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys
