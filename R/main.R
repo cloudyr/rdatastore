@@ -28,10 +28,11 @@ authenticate_datastore <- function(key, secret, project) {
   google_token <- httr::oauth2.0_token(httr::oauth_endpoints("google"),
                                        app,
                                        scope = datastore_url)
-
+  url <- paste0("https://datastore.googleapis.com/v1beta3/projects/", project)
   # Create global variable for project id
   assign("project_id", project, envir=Rdatastore)
   assign("token", google_token, envir=Rdatastore)
+  assign("url", url, envir=Rdatastore)
 }
 
 if (file.exists("credentials.json")) {
@@ -40,7 +41,6 @@ if (file.exists("credentials.json")) {
                          secret = credentials$secret,
                          project = credentials$project)
 }
-
 
 
 #' Lookup
@@ -67,8 +67,7 @@ lookup <- function(kind, name = NULL, id = NULL) {
     stop("Must specify name or id. You can not specify both.")
   }
 
-  url <- paste0("https://datastore.googleapis.com/v1beta3/projects/", Rdatastore$project_id, ":lookup")
-  req <- httr::POST(url,
+  req <- httr::POST(paste0(Rdatastore$url, ":lookup"),
                     httr::config(token = Rdatastore$token),
                     body = list(keys = list(path = lookup_q)),
                     encode = "json")
@@ -108,4 +107,26 @@ lookup <- function(kind, name = NULL, id = NULL) {
   }, results)
   names(properties) <- names(results)
   dplyr::tbl_df(as.data.frame(properties, stringsAsFactors = F))
+}
+
+
+#' Store
+#'
+#' @param kind The entity kind
+#' @param name The name or id
+#' @param ... Additional properties to store
+#'
+#' @seealso \url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys
+#'
+#' @export
+
+store <- function(kind, name = NULL, ...) {
+  dots <- list(...)
+  print(dots)
+
+  req <- httr::POST(paste0(Rdatastore$url, ":commit"),
+                    httr::config(token = Rdatastore$token),
+                    body = list(keys = list(path = lookup_q)),
+                    encode = "json")
+
 }
