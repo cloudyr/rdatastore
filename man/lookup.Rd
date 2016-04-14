@@ -13,6 +13,9 @@ lookup(kind, name = NULL, id = NULL)
 
 \item{project}{Google cloud platform project id/name.}
 }
+\value{
+dataframe of entity.
+}
 \description{
 Lookup
 }
