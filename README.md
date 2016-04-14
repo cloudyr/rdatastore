@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/danielecook/Rdatastore.svg?branch=master)](https://travis-ci.org/danielecook/Rdatastore)
+[![Build Status](https://travis-ci.org/danielecook/rdatastore.svg?branch=master)](https://travis-ci.org/danielecook/rdatastore)
 
 # rdatastore
 R package for accessing google datastore
