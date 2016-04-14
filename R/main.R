@@ -1,5 +1,5 @@
 # Constants
-Rdatastore <- new.env()
+rdatastore_env <- new.env()
 datastore_url <- "https://www.googleapis.com/auth/datastore"
 datastore_types <- list("integer" = "integerValue",
                         "double" = "doubleValue",
@@ -62,8 +62,8 @@ format_to_properties <- function(properties) {
 
 # Return transaction ID
 transaction <- function() {
-  req <- httr::POST(paste0(Rdatastore$url, ":beginTransaction"),
-                    httr::config(token = Rdatastore$token),
+  req <- httr::POST(paste0(rdatastore_env$url, ":beginTransaction"),
+                    httr::config(token = rdatastore_env$token),
                     encode = "json")
   httr::content(req)$transaction
 }
@@ -88,8 +88,8 @@ transaction <- function() {
 authenticate_datastore <- function(key, secret, project) {
   # Authorize app
   app <- httr::oauth_app("google",
-                     key = key,
-                     secret = secret)
+                         key = key,
+                         secret = secret)
 
   # Fetch token
   google_token <- httr::oauth2.0_token(httr::oauth_endpoints("google"),
@@ -97,16 +97,9 @@ authenticate_datastore <- function(key, secret, project) {
                                        scope = datastore_url)
   url <- paste0("https://datastore.googleapis.com/v1beta3/projects/", project)
   # Create global variable for project id
-  assign("project_id", project, envir=Rdatastore)
-  assign("token", google_token, envir=Rdatastore)
-  assign("url", url, envir=Rdatastore)
-}
-
-if (file.exists("credentials.json")) {
-  credentials <- jsonlite::fromJSON("credentials.json")
-  authenticate_datastore(key = credentials$key,
-                         secret = credentials$secret,
-                         project = credentials$project)
+  assign("project_id", project, envir=rdatastore_env)
+  assign("token", google_token, envir=rdatastore_env)
+  assign("url", url, envir=rdatastore_env)
 }
 
 #' Authenticate Datastore using a service account
@@ -124,7 +117,7 @@ if (file.exists("credentials.json")) {
 #' @export
 
 
-authenticate_service_account <- function(credentials, project) {
+authenticate_datastore_service <- function(credentials, project) {
 
   # Locate Credentials
   if (file.exists(as.character(credentials))) {
@@ -136,14 +129,14 @@ authenticate_service_account <- function(credentials, project) {
   }
 
   google_token <- httr::oauth_service_token(httr::oauth_endpoints("google"),
-                            credentials,
-                            scope = datastore_url)
+                                            credentials,
+                                            scope = datastore_url)
 
   url <- paste0("https://datastore.googleapis.com/v1beta3/projects/", project)
   # Create global variable for project id
-  assign("project_id", project, envir=Rdatastore)
-  assign("token", google_token, envir=Rdatastore)
-  assign("url", url, envir=Rdatastore)
+  assign("project_id", project, envir=rdatastore_env)
+  assign("token", google_token, envir=rdatastore_env)
+  assign("url", url, envir=rdatastore_env)
 }
 
 #' Lookup
@@ -171,8 +164,8 @@ lookup <- function(kind, name = NULL, id = NULL) {
     stop("Must specify name or id. You can not specify both.")
   }
 
-  req <- httr::POST(paste0(Rdatastore$url, ":lookup"),
-                    httr::config(token = Rdatastore$token),
+  req <- httr::POST(paste0(rdatastore_env$url, ":lookup"),
+                    httr::config(token = rdatastore_env$token),
                     body = list(keys = list(path = lookup_q)),
                     encode = "json")
 
@@ -208,21 +201,21 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert") {
   # Generate mutation
   mutation = list()
   mutation[[mutation_type]] =  c(
-      list(key = list(path = list(
-        kind = kind,
-        name = name
-      )),
-      properties = format_to_properties(list(...))
-      )
+    list(key = list(path = list(
+      kind = kind,
+      name = name
+    )),
+    properties = format_to_properties(list(...))
+    )
   )
 
 
   body <- list(mutations = mutation,
                transaction = transaction_id
-               )
+  )
 
-  req <- httr::POST(paste0(Rdatastore$url, ":commit"),
-                    httr::config(token = Rdatastore$token),
+  req <- httr::POST(paste0(rdatastore_env$url, ":commit"),
+                    httr::config(token = rdatastore_env$token),
                     body =  body,
                     encode = "json")
 
