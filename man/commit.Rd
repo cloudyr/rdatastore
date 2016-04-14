@@ -13,10 +13,10 @@ commit(kind, name = NULL, mutation = "upsert", ...)
 
 \item{mutation}{The type of mutation. One of \strong{insert}, \strong{update}, \strong{upsert}, or \strong{delete}. Default is upsert.}
 
-\item{...}{Additional properties to store}
+\item{...}{Additional arguments to store as properties.}
 }
 \description{
-Commit changes to the datastore.
+Commit a single entity to the datastore.
 }
 \seealso{
 \url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys

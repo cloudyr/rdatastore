@@ -1,6 +1,6 @@
-Package: Rdatastore
+Package: rdatastore
 Type: Package
-Title: Rdatastore
+Title: rdatastore
 Version: 0.1.0
 Authors@R: person("Daniel", "Cook", email = "danielecook@gmail.com", role = c("aut", "cre"))
 Description: Enables R to interact with google datastore.
