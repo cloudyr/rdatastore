@@ -1,5 +1,8 @@
-print(getwd())
-client_secret <- paste0(find.package("rdatastore"), "/client-secret.json")
+
+
+client_secret <- "/home/travis/build/danielecook/client-secret.json"
+print(dir(find.package("rdatastore")))
+print(dir("~"))
 authenticate_datastore_service(client_secret, "andersen-lab")
 
 test_that("authenticate", {
