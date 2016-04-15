@@ -105,7 +105,7 @@ authenticate_datastore_service <- function(credentials, project) {
 }
 
 # Authenticate for testing examples
-if (Sys.getenv("travis-ci") == TRUE) {
+if (Sys.getenv("travis") == TRUE) {
   client_secret <- paste0(find.package("rdatastore"), "/client-secret.json")
   authenticate_datastore_service(client_secret, "andersen-lab")
 }
