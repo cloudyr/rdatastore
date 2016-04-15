@@ -1,6 +1,6 @@
 
 
-# authenticate_datastore_service("credentials", "andersen-lab")
+authenticate_datastore_service("client-secret.json", "andersen-lab")
 
 test_that("authenticate", {
   x <- TRUE

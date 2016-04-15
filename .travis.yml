@@ -1,6 +1,7 @@
-# Sample .travis.yml for R projects
-
 language: r
 warnings_are_errors: false
 sudo: false
 cache: packages
+before_install:
+- openssl aes-256-cbc -K $encrypted_00efb9ac22cd_key -iv $encrypted_00efb9ac22cd_iv
+  -in client-secret.json.enc -out client-secret.json -d
