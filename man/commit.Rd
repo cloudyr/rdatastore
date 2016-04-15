@@ -4,7 +4,8 @@
 \alias{commit}
 \title{commit}
 \usage{
-commit(kind, name = NULL, ..., mutation_type = "upsert")
+commit(kind, name = NULL, ..., mutation_type = "upsert",
+  keep_existing = TRUE)
 }
 \arguments{
 \item{kind}{The entity kind}
@@ -14,6 +15,8 @@ commit(kind, name = NULL, ..., mutation_type = "upsert")
 \item{...}{Additional arguments to store as properties.}
 
 \item{mutation_type}{The type of mutation. One of \strong{insert}, \strong{update}, \strong{upsert}, or \strong{delete}. Default is upsert.}
+
+\item{keep_existing}{Preserve/edit existing data. The entity will be retrieved and specified properties replaced or new properties added. Existing properties will be retained. Default is TRUE.}
 }
 \value{
 transaction_id

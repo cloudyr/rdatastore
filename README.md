@@ -6,6 +6,10 @@ R package for accessing google datastore
 
 ### To Do
 
+* [ ] Add tests for autoallocation of ids when committing.
+* [ ] Add tests for __keep_existing__ T/F.
+* [ ] When committing, return data, auto-allocation id, and transaction id.
+
 ### Functions
 
 * [x] `lookup` - Lookup single entities. Returns a data frame.
@@ -20,7 +24,7 @@ R package for accessing google datastore
 * [x] __keep_existing__ When updating - keep existing values, add new ones, and overwrite where specified.
 * [ ] Figure out how to store blobs or at the very least offer way to serialize data (_e.g._ lists, df, and other types of objects).
 
-#### commit_df
+#### `commit_df()`
 
 User specifies a key (unique value) for a given dataframe  
 
