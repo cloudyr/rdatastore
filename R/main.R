@@ -67,6 +67,7 @@ transaction <- function() {
   httr::content(req)$transaction
 }
 
+
 #' Authenticate Datastore using a service account
 #'
 #' Set credentials to the name of an environmental variable
@@ -107,7 +108,6 @@ authenticate_datastore_service <- function(credentials, project) {
 if (file.exists("client-secret.json")) {
   authenticate_datastore_service("client-secret.json", "andersen-lab")
 }
-
 
 #' Authenticate Datastore
 #'
