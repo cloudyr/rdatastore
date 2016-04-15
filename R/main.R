@@ -104,10 +104,6 @@ authenticate_datastore_service <- function(credentials, project) {
   assign("url", url, envir=rdatastore_env)
 }
 
-# For testing
-if (file.exists("client-secret.json")) {
-  authenticate_datastore_service("client-secret.json", "andersen-lab")
-}
 
 #' Authenticate Datastore
 #'
