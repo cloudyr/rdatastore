@@ -47,8 +47,12 @@ format_to_properties <- function(properties) {
   mapply(names(properties), FUN = function(var_name) {
     var_value <- properties[[var_name]]
     if (lubridate::is.Date(var_value) ||
-        lubridate::is.POSIXt(var_value)) {
-      var_type <- datastore_types["date"]
+        lubridate::is.POSIXt(var_value) ||
+        lubridate::is.timepoint(var_value)) {
+      var_type <- datastore_types$date
+      print(var_value)
+      var_value <- strftime(var_value, format = "%FT%H:%M:%OSZ")
+      print(var_value)
     } else {
       var_type <- datastore_types[[typeof(var_value)]]
     }
@@ -107,7 +111,9 @@ authenticate_datastore_service <- function(credentials, project) {
 # Authenticate for testing examples
 if (Sys.getenv("travis") == TRUE) {
   client_secret <- paste0(find.package("rdatastore"), "/client-secret.json")
-  authenticate_datastore_service(client_secret, "andersen-lab")
+  authenticate_datastore_service(client_secret, Sys.getenv("project_id"))
+} else if (Sys.getenv("USER") == "dancook") {
+  authenticate_datastore_service("client-secret.json", Sys.getenv("project_id"))
 }
 
 #' Authenticate Datastore
@@ -177,11 +183,11 @@ lookup <- function(kind, name = NULL, id = NULL) {
                     body = list(keys = list(path = lookup_q)),
                     encode = "json")
 
+  print(httr::content(req, as = "text"))
   resp <- jsonlite::fromJSON(httr::content(req, as = "text"))$found
   variables <- names(resp$entity$properties)
   values <- resp$entity$properties
   results <- resp$entity$properties
-
   # Return transaction id if successful, else error.
   if (req$status_code != 200) {
     stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
