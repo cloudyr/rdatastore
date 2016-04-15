@@ -2,9 +2,9 @@
 
 print(dir(find.package("rdatastore")))
 print(getwd())
-print(dir(getwd()))
-print(dir(getwd("../")))
-print(dir(getwd("../../")))
+print(dir())
+print(dir("../"))
+print(dir("../../"))
 print(dir("~"))
 authenticate_datastore_service("client-secret.json", "andersen-lab")
 
