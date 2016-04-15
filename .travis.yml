@@ -3,5 +3,6 @@ warnings_are_errors: false
 sudo: false
 cache: packages
 before_install:
+- mkdir inst
 - openssl aes-256-cbc -K $encrypted_00efb9ac22cd_key -iv $encrypted_00efb9ac22cd_iv
-  -in client-secret.json.enc -out client-secret.json -d
+  -in client-secret.json.enc -out inst/client-secret.json -d
