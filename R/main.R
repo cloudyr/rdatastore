@@ -6,7 +6,8 @@ datastore_types <- list("integer" = "integerValue",
                         "character" = "stringValue",
                         "logical" = "booleanValue",
                         "NULL" = "nullValue",
-                        "date" = "timestampValue")
+                        "date" = "timestampValue",
+                        "binary" = "blobValue")
 # Utility Functions
 format_from_results <- function(results) {
   properties <- lapply(names(results), function(var_name, var_value) {
@@ -16,7 +17,8 @@ format_from_results <- function(results) {
     } else if (var_type == "stringValue") {
       type_conv <- as.character
     } else if (var_type == "blobValue") {
-      type_conv <- as.character
+      print(unserialize(charToRaw(results[[var_name]]$blobValue)))
+      type_conv <- function(x) { unserialize(as.raw(x)) }
     } else if (var_type == "doubleValue") {
       type_conv <- as.double
     } else if (var_type == "booleanValue") {
@@ -41,7 +43,14 @@ format_from_results <- function(results) {
 }
 
 
-format_to_properties <- function(properties) {
+format_to_properties <- function(properties, existing_data = F) {
+  # Replace edits and add new ones.
+  if (is.data.frame(existing_data)) {
+    new_items <- names(properties)
+    existing_items <- names(existing_data)
+    existing_data <- existing_data[setdiff(existing_items, new_items)]
+    properties <- append(properties, as.list(existing_data))
+  }
   # Format a list in R into nested list
   # structure required for REST API.
   mapply(names(properties), FUN = function(var_name) {
@@ -51,6 +60,9 @@ format_to_properties <- function(properties) {
         lubridate::is.timepoint(var_value)) {
       var_type <- datastore_types$date
       var_value <- strftime(var_value, format = "%FT%H:%M:%OSZ")
+    } else if (!(typeof(var_value) %in% names(datastore_types))) {
+      var_type <- datastore_types$binary
+      var_value <- serialize(var_value, NULL, ascii = T)
     } else {
       var_type <- datastore_types[[typeof(var_value)]]
     }
@@ -165,7 +177,7 @@ authenticate_datastore <- function(key, secret, project) {
 lookup <- function(kind, name = NULL, id = NULL) {
 
   if(all(is.null(name), is.null(id))) {
-    stop("Must specify a name or id")
+    stop("Must specify a name or id. Set name = NULL to auto-allocate id.")
   }
 
   if (is.null(id)) {
@@ -219,18 +231,33 @@ lookup <- function(kind, name = NULL, id = NULL) {
 #' @export
 
 
-commit <- function(kind, name = NULL, ..., mutation_type = "upsert") {
+commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existing = TRUE) {
+
+  existing_data <- NA
+  if (keep_existing & !is.null(name)) {
+    # Fold in existing values
+    existing_data <- lookup(kind, name)
+  }
 
   transaction_id <- transaction()
+
+  # If name is null, autoallocate id.
+  if (!is.null(name)) {
+    path_item <- list(
+      kind = kind,
+      name = name
+    )
+  } else {
+    path_item <- list(
+      kind = kind
+    )
+  }
 
   # Generate mutation
   mutation = list()
   mutation[[mutation_type]] =  c(
-    list(key = list(path = list(
-      kind = kind,
-      name = name
-    )),
-    properties = format_to_properties(list(...))
+    list(key = list(path = path_item),
+    properties = format_to_properties(list(...), existing_data)
     )
   )
 
