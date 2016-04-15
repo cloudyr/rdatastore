@@ -50,9 +50,7 @@ format_to_properties <- function(properties) {
         lubridate::is.POSIXt(var_value) ||
         lubridate::is.timepoint(var_value)) {
       var_type <- datastore_types$date
-      print(var_value)
       var_value <- strftime(var_value, format = "%FT%H:%M:%OSZ")
-      print(var_value)
     } else {
       var_type <- datastore_types[[typeof(var_value)]]
     }
@@ -183,7 +181,6 @@ lookup <- function(kind, name = NULL, id = NULL) {
                     body = list(keys = list(path = lookup_q)),
                     encode = "json")
 
-  print(httr::content(req, as = "text"))
   resp <- jsonlite::fromJSON(httr::content(req, as = "text"))$found
   variables <- names(resp$entity$properties)
   values <- resp$entity$properties
