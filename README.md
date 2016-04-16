@@ -6,9 +6,12 @@ R package for accessing google datastore
 
 ### To Do
 
-* [ ] Add tests for autoallocation of ids when committing.
-* [ ] Add tests for __keep_existing__ T/F.
-* [ ] When committing, return data, auto-allocation id, and transaction id.
+* [x] Add tests for autoallocation of ids when committing.
+* [x] Add tests for __keep_existing__ T/F.
+* [x] Add test for datetime consistancy.
+* [x] When committing, return data and transaction id.
+* [ ] Blob support.
+* [ ] Check for character vectors/lists, etc.
 
 ### Functions
 
@@ -17,7 +20,7 @@ R package for accessing google datastore
 * [ ] `commit_df` - Save a dataframe to the google datastore with update/upsert/insert/delete (consistant data).
 * [ ] `commit_list` - Save a list (heterogeneous data).
 * [ ] `runQuery` - Function for querying. Possibly using dplyr style.
-* [ ] `datasets` - A centralized function for tracking/accessing datasets.
+* [ ] `datasets` - A centralized function for tracking/accessing datasets. Read only store.
 
 ### Features
 
