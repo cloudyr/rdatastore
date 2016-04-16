@@ -23,6 +23,7 @@ test_that("delete entity", {
   expect_equal(0, nrow(lookup("test", "test_delete")))
 })
 
+
 insertion_name <- Sys.time()
 
 test_that("insert entity", {
@@ -58,6 +59,7 @@ test_that("update entity", {
 
 
 test_that("upsert entity", {
+  insertion_name <- Sys.time()
   upsert <- commit("test",
          insertion_name,
          string_prop = "upsert_test",
@@ -70,8 +72,8 @@ test_that("upsert entity", {
   upserted_item <- lookup("test", insertion_name)
 
   # Convert dates to characters for comparison
-  upsert$content$timestamp_prop <- substr(as.character(update$content$timestamp_prop), 1, 19)
-  upserted_item$timestamp_prop <-  substr(as.character(updated_item$timestamp_prop), 1, 19)
+  upsert$content$timestamp_prop <- substr(as.character(upsert$content$timestamp_prop), 1, 19)
+  upserted_item$timestamp_prop <-  substr(as.character(upserted_item$timestamp_prop), 1, 19)
 
   expect_equal(upserted_item, upsert$content)
 })
