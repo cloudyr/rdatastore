@@ -19,7 +19,7 @@ commit(kind, name = NULL, ..., mutation_type = "upsert",
 \item{keep_existing}{Preserve/edit existing data. The entity will be retrieved and specified properties replaced or new properties added. Existing properties will be retained. Default is TRUE.}
 }
 \value{
-transaction_id
+list of content and the transaction id
 }
 \description{
 Commit a single entity to the datastore.

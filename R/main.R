@@ -24,7 +24,7 @@ format_from_results <- function(results) {
     } else if (var_type == "booleanValue") {
       type_conv <- as.logical
     } else if (var_type == "timestampValue") {
-      type_conv <- lubridate::ymd_hms
+      type_conv <- function(x) { lubridate::with_tz(lubridate::ymd_hms(x), Sys.timezone()) }
     } else if (var_type == "nullValue") {
       # Can't be null or data frame won't return correctly.
       type_conv <- as.logical
@@ -59,7 +59,7 @@ format_to_properties <- function(properties, existing_data = F) {
         lubridate::is.POSIXt(var_value) ||
         lubridate::is.timepoint(var_value)) {
       var_type <- datastore_types$date
-      var_value <- strftime(var_value, format = "%FT%H:%M:%OSZ")
+      var_value <- strftime(var_value, format = "%FT%H:%M:%OSZ", tz = "GMT")
     } else if (!(typeof(var_value) %in% names(datastore_types))) {
       var_type <- datastore_types$binary
       var_value <- serialize(var_value, NULL, ascii = T)
@@ -194,6 +194,7 @@ lookup <- function(kind, name = NULL, id = NULL) {
                     encode = "json")
 
   resp <- jsonlite::fromJSON(httr::content(req, as = "text"))$found
+
   variables <- names(resp$entity$properties)
   values <- resp$entity$properties
   results <- resp$entity$properties
@@ -225,7 +226,7 @@ lookup <- function(kind, name = NULL, id = NULL) {
 #' @examples
 #' commit("test", "entity_name", int_column = as.integer(1), str_column = "awesome!", float_column = 3.14)
 #'
-#' @return transaction_id
+#' @return list of content and the transaction id
 #'
 #' @seealso \url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys
 #'
@@ -256,16 +257,21 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
 
   # Generate mutation
   mutation = list()
-  mutation[[mutation_type]] =  c(
-    list(key = list(path = path_item),
-    properties = format_to_properties(list(...), existing_data)
+  if (mutation_type == "delete") {
+    mutation[[mutation_type]] =  list(path = path_item)
+  } else {
+    mutation[[mutation_type]] =  c(
+           list(key = list(path = path_item),
+           properties = format_to_properties(list(...), existing_data)
+      )
     )
-  )
+  }
 
 
   body <- list(mutations = mutation,
                transaction = transaction_id
   )
+
 
   req <- httr::POST(paste0(rdatastore_env$url, ":commit"),
                     httr::config(token = rdatastore_env$token),
@@ -274,7 +280,8 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
 
   # Return transaction id if successful, else error.
   if (req$status_code == 200) {
-    transaction_id
+    list(content = dplyr::tbl_df(as.data.frame(list(...))),
+         transaction_id = transaction_id)
   } else {
     stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
   }
