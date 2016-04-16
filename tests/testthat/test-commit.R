@@ -86,6 +86,15 @@ test_that("keep existing", {
   expect_equal(ncol(keep_existing_result), 4)
 })
 
+test_that("do not keep existing", {
+  insertion_name <- paste0("test-existing:", Sys.time())
+  commit("test", insertion_name, existing_value = "great")
+  commit("test", insertion_name, new_value = "awesome", keep_existing = F)
+
+  keep_existing_result <- lookup("test", insertion_name)
+  expect_equal(ncol(keep_existing_result), 3)
+})
+
 
 
 test_that("no name no data", {
