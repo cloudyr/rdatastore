@@ -17,8 +17,9 @@ format_from_results <- function(results) {
     } else if (var_type == "stringValue") {
       type_conv <- as.character
     } else if (var_type == "blobValue") {
-      print(unserialize(charToRaw(results[[var_name]]$blobValue)))
-      type_conv <- function(x) { unserialize(as.raw(x)) }
+      type_conv <- function(x) {
+        unserialize(base64enc::base64decode(x$blobValue))
+      }
     } else if (var_type == "doubleValue") {
       type_conv <- as.double
     } else if (var_type == "booleanValue") {
@@ -62,7 +63,8 @@ format_to_properties <- function(properties, existing_data = F) {
       var_value <- strftime(var_value, format = "%FT%H:%M:%OSZ", tz = "GMT")
     } else if (!(typeof(var_value) %in% names(datastore_types))) {
       var_type <- datastore_types$binary
-      var_value <- serialize(var_value, NULL, ascii = T)
+      print(var_value)
+      var_value <- base64enc::base64encode(serialize(var_value, NULL, ascii=T))
     } else {
       var_type <- datastore_types[[typeof(var_value)]]
     }
