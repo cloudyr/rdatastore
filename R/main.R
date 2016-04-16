@@ -172,6 +172,7 @@ authenticate_datastore <- function(key, secret, project) {
 #'
 #' @seealso \url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys
 #' @return dataframe of entity.
+#' @importFrom dplyr %>%
 #' @export
 
 lookup <- function(kind, name = NULL, id = NULL) {
@@ -205,7 +206,9 @@ lookup <- function(kind, name = NULL, id = NULL) {
 
   # Convert Variable types and return as data frame.
   results <- format_from_results(results)
-  dplyr::tbl_df(as.data.frame(results, stringsAsFactors = F))
+  dplyr::tbl_df(as.data.frame(results, stringsAsFactors = F))  %>%
+    dplyr::mutate(kind = kind, name = name) %>%
+    dplyr::select(kind, name, everything())
 }
 
 
@@ -229,6 +232,7 @@ lookup <- function(kind, name = NULL, id = NULL) {
 #' @return list of content and the transaction id
 #'
 #' @seealso \url{https://cloud.google.com/datastore/docs/concepts/entities} - Entities, Properties, and Keys
+#' @importFrom dplyr %>%
 #'
 #' @export
 
@@ -238,7 +242,8 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
   existing_data <- NA
   if (keep_existing & !is.null(name)) {
     # Fold in existing values
-    existing_data <- lookup(kind, name)
+    existing_data <- lookup(kind, name) %>%
+                     dplyr::select(-kind,-name)
   }
 
   transaction_id <- transaction()
@@ -255,16 +260,19 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
     )
   }
 
+  # Setup properties
+  if (length(list(...)) > 0) {
+    key_obj <- c(list(key = list(path = path_item),
+                  properties = format_to_properties(list(...), existing_data)))
+  } else {
+    key_obj <- c(list(key = list(path = path_item)))
+  }
   # Generate mutation
   mutation = list()
   if (mutation_type == "delete") {
     mutation[[mutation_type]] =  list(path = path_item)
   } else {
-    mutation[[mutation_type]] =  c(
-           list(key = list(path = path_item),
-           properties = format_to_properties(list(...), existing_data)
-      )
-    )
+    mutation[[mutation_type]] =  key_obj
   }
 
 
@@ -280,7 +288,16 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
 
   # Return transaction id if successful, else error.
   if (req$status_code == 200) {
-    list(content = dplyr::tbl_df(as.data.frame(list(...))),
+    results <- dplyr::tbl_df(as.data.frame(list(...), stringsAsFactors = F)) %>%
+               dplyr::mutate(kind = kind) %>%
+               dplyr::select(kind, everything())
+
+    if (!is.null(name)) {
+      results <- dplyr::mutate(results, name = name) %>%
+                 dplyr::select(kind, name, everything())
+    }
+
+    list(content = results,
          transaction_id = transaction_id)
   } else {
     stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
