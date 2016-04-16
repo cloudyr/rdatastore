@@ -11,5 +11,6 @@ Imports:
     dplyr,
     lubridate,
     httr,
-    jsonlite
+    jsonlite,
+    base64enc
 Suggests: testthat
