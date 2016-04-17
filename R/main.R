@@ -11,7 +11,7 @@ datastore_types <- list("integer" = "integerValue",
 # Utility Functions
 format_from_results <- function(results) {
   properties <- lapply(names(results), function(var_name, var_value) {
-    var_type <- names(results[[var_name]])
+    var_type <- names(results[[var_name]])[[1]]
     if (var_type == "integerValue") {
       type_conv <- as.integer
     } else if (var_type == "stringValue") {
@@ -37,7 +37,7 @@ format_from_results <- function(results) {
       results[[var_name]] <- paste0("Key(", q_kind, ", '", q_name,"')")
     }
 
-    type_conv(results[[var_name]])
+    type_conv(results[[var_name]][[1]])
   }, results)
   names(properties) <- names(results)
   properties
