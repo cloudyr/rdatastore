@@ -80,6 +80,9 @@ transaction <- function() {
   req <- httr::POST(paste0(rdatastore_env$url, ":beginTransaction"),
                     httr::config(token = rdatastore_env$token),
                     encode = "json")
+  if (req$status_code != 200) {
+    stop(httr::content(req)$error$message)
+  }
   httr::content(req)$transaction
 }
 
@@ -196,15 +199,15 @@ lookup <- function(kind, name = NULL, id = NULL) {
                     body = list(keys = list(path = lookup_q)),
                     encode = "json")
 
+  if (req$status_code != 200) {
+    stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
+  }
+
   resp <- jsonlite::fromJSON(httr::content(req, as = "text"))$found
 
   variables <- names(resp$entity$properties)
   values <- resp$entity$properties
   results <- resp$entity$properties
-  # Return transaction id if successful, else error.
-  if (req$status_code != 200) {
-    stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
-  }
 
   # Convert Variable types and return as data frame.
   results <- format_from_results(results)
@@ -242,7 +245,7 @@ lookup <- function(kind, name = NULL, id = NULL) {
 commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existing = TRUE) {
 
   existing_data <- NA
-  if (keep_existing & !is.null(name)) {
+  if (keep_existing & !is.null(name) & mutation_type != "delete") {
     # Fold in existing values
     existing_data <- lookup(kind, name) %>%
                      dplyr::select(-kind,-name)
@@ -287,6 +290,7 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
                     httr::config(token = rdatastore_env$token),
                     body =  body,
                     encode = "json")
+
 
   # Return transaction id if successful, else error.
   if (req$status_code == 200) {
