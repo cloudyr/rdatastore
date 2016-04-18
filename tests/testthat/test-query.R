@@ -5,7 +5,7 @@ test_that("Perform GQL Query", {
   commit("test", "q3", q_item = as.integer(3))
   commit("test", "q4", q_item = as.integer(4))
   results <- gql("SELECT * FROM test WHERE q_item > 2")
-  expect_is(nrow(results), 2)
+  expect_equal(nrow(results), 2)
 })
 
 

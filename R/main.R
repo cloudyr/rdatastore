@@ -123,14 +123,6 @@ authenticate_datastore_service <- function(credentials, project) {
   assign("url", url, envir=rdatastore_env)
 }
 
-# Authenticate for testing examples
-if (Sys.getenv("travis") == TRUE) {
-  client_secret <- paste0(find.package("rdatastore"), "/client-secret.json")
-  authenticate_datastore_service(client_secret, Sys.getenv("project_id"))
-} else if (Sys.getenv("USER") == "dancook") {
-  authenticate_datastore_service("client-secret.json", Sys.getenv("project_id"))
-}
-
 #' Authenticate Datastore
 #'
 #' Authenticate datastore using OAuth 2.0. Create an application on the
@@ -163,6 +155,17 @@ authenticate_datastore <- function(key, secret, project) {
   assign("token", google_token, envir=rdatastore_env)
   assign("url", url, envir=rdatastore_env)
 }
+
+
+# Authenticate for testing examples
+if (Sys.getenv("travis") == TRUE) {
+  client_secret <- paste0(find.package("rdatastore"), "/client-secret.json")
+  authenticate_datastore_service(client_secret, Sys.getenv("project_id"))
+} else if (Sys.getenv("USER") %in% c("dancook", "danielcook")) {
+  credentials <- jsonlite::fromJSON("credentials.json")
+  authenticate_datastore(credentials$key, credentials$secret, credentials$project)
+}
+
 
 
 #' Lookup
