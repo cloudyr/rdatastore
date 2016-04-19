@@ -3,6 +3,7 @@
 export(authenticate_datastore)
 export(authenticate_datastore_service)
 export(commit)
+export(commit_df)
 export(gql)
 export(lookup)
 importFrom(dplyr,"%>%")

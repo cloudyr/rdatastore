@@ -17,6 +17,7 @@
 
 
 gql <- function(query) {
+  loadNamespace("rdatastore")
   body <- list(gqlQuery = list(queryString = query, allowLiterals = TRUE))
 
 
