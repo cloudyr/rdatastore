@@ -54,8 +54,9 @@ format_to_properties <- function(properties, existing_data = F) {
   }
   # Format a list in R into nested list
   # structure required for REST API.
-  mapply(names(properties), FUN = function(var_name) {
+  results <- mapply(names(properties), FUN = function(var_name) {
     var_value <- properties[[var_name]]
+    if (!is.na(var_value)) {
     if (lubridate::is.Date(var_value) ||
         lubridate::is.POSIXt(var_value) ||
         lubridate::is.timepoint(var_value)) {
@@ -71,7 +72,9 @@ format_to_properties <- function(properties, existing_data = F) {
     prop = list()
     prop[[var_type]] = var_value
     prop
+    }
   }, SIMPLIFY = FALSE)
+  results[!sapply(results, is.null)]
 }
 
 
