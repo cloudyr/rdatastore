@@ -3,7 +3,8 @@
 #'
 #' Query using the Google Query Language (GQL)
 #'
-#' @param query The query to run.
+#' @param kind dataframe name
+#' @param name name column to use.
 #'
 #' @examples
 #' gql("SELECT * FROM test")
@@ -17,46 +18,41 @@
 
 
 
-commit_df <- function(kind, name, df, mutation_type = "upsert", keep_existing = TRUE) {
+commit_df <- function(kind = NULL, name = NULL, df, mutation_type = "upsert", keep_existing = TRUE) {
 
-  existing_data <- NA
-  if (keep_existing & !is.null(name) & mutation_type != "delete") {
-    # Fold in existing values
-    existing_data <- lookup(kind, name) %>%
-      dplyr::select(-kind,-name)
+  if (is.NULL(kind)) {
+    kind <- deparse(substitute(kind))
   }
 
   transaction_id <- transaction()
 
-  # If name is null, autoallocate id.
-  if (!is.null(name)) {
-    path_item <- list(
-      kind = kind,
-      name = name
-    )
-  } else {
-    path_item <- list(
-      kind = kind
-    )
-  }
-
-  # Setup properties
-  if (length(list(...)) > 0) {
-    key_obj <- c(list(key = list(path = path_item),
-                      properties = format_to_properties(list(...), existing_data)))
-  } else {
-    key_obj <- c(list(key = list(path = path_item)))
-  }
-  # Generate mutation
   mutation = list()
-  if (mutation_type == "delete") {
-    mutation[[mutation_type]] =  list(path = path_item)
-  } else {
-    mutation[[mutation_type]] =  key_obj
-  }
 
+  keep_cols = which(!(names(df) == name))
 
-  body <- list(mutations = mutation,
+  data <- lapply(1:nrow(df), function(i) {
+    # If name is null, autoallocate id.
+    if (!is.null(df[i,name])) {
+      path_item <- list(
+        kind = kind,
+        name = df[i,name]$name
+      )
+    } else {
+      path_item <- list(
+        kind = kind
+      )
+    }
+    properties <- df[i,keep_cols] %>%
+                  unlist() %>%
+                  format_to_properties()
+
+    key_obj <- list(key = list(path = path_item),
+                      properties = properties)
+
+    c(list("upsert" = key_obj))
+  })
+
+   body <- list(mutations = c(data),
                transaction = transaction_id
   )
 
@@ -64,7 +60,8 @@ commit_df <- function(kind, name, df, mutation_type = "upsert", keep_existing = 
   req <- httr::POST(paste0(rdatastore_env$url, ":commit"),
                     httr::config(token = rdatastore_env$token),
                     body =  body,
-                    encode = "json")
+                    encode = "json",
+                    httr::verbose())
 
 
   # Return transaction id if successful, else error.

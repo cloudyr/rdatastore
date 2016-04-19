@@ -161,9 +161,6 @@ authenticate_datastore <- function(key, secret, project) {
 if (Sys.getenv("travis") == TRUE) {
   client_secret <- paste0(find.package("rdatastore"), "/client-secret.json")
   authenticate_datastore_service(client_secret, Sys.getenv("project_id"))
-} else if (Sys.getenv("USER") %in% c("dancook", "danielcook")) {
-  credentials <- jsonlite::fromJSON("credentials.json")
-  authenticate_datastore(credentials$key, credentials$secret, credentials$project)
 }
 
 
