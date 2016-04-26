@@ -4,10 +4,11 @@
 #' Query using the Google Query Language (GQL)
 #'
 #' @param kind dataframe name
-#' @param name name column to use.
+#' @param name name column to use. Use "row.names" to use row names.
 #'
 #' @examples
-#' gql("SELECT * FROM test")
+#' data(mtcars)
+#' commit_df(kind = "test")
 #'
 #' @return Data frame of results
 #'
@@ -24,12 +25,11 @@ commit_df <- function(kind = NULL, name = NULL, df, mutation_type = "upsert", ke
     kind <- deparse(substitute(kind))
   }
   # Maximum of 25 items can be added at once.
-  df_groups <- split(df, (as.numeric(rownames(df))-1) %/% 25)
+  df_groups <- split(df, (1:nrow(df)) %/% 25)
 
   sapply(df_groups, function(df) {
 
     transaction_id <- transaction()
-
     mutation = list()
 
     if (!is.null(name)) {
@@ -41,6 +41,11 @@ commit_df <- function(kind = NULL, name = NULL, df, mutation_type = "upsert", ke
     data <- lapply(1:nrow(df), function(i) {
       # If name is null, autoallocate id.
       if (!is.null(name)) {
+        if (name == "row.names") {
+          name = row.names(df[i,])[1]
+        } else {
+          name <- df[i,name]$name
+        }
         path_item <- list(
           kind = kind,
           name = df[i,name]$name

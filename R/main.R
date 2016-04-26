@@ -64,7 +64,6 @@ format_to_properties <- function(properties, existing_data = F) {
       var_value <- strftime(var_value, format = "%FT%H:%M:%OSZ", tz = "GMT")
     } else if (!(typeof(var_value) %in% names(datastore_types))) {
       var_type <- datastore_types$binary
-      print(var_value)
       var_value <- base64enc::base64encode(serialize(var_value, NULL, ascii=T))
     } else {
       var_type <- datastore_types[[typeof(var_value)]]

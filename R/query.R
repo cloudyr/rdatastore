@@ -24,11 +24,11 @@ gql <- function(query) {
   req <- httr::POST(paste0(rdatastore_env$url, ":runQuery"),
                     httr::config(token = rdatastore_env$token),
                     body =  body,
-                    encode = "json")
+                    encode = "json",
+                    httr::verbose())
 
   # Return transaction id if successful, else error.
   if (req$status_code == 200) {
-
     results <- dplyr::bind_rows(lapply(httr::content(req)$batch$entityResults, function(row) {
       kind = row$entity$key$path[[1]]$kind
       if ("name" %in% names(row$entity$key$path[[1]])) {

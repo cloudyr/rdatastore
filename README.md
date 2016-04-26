@@ -21,6 +21,7 @@ R package for accessing google datastore
 * [ ] `commit_list` - Save a list (heterogeneous data).
 * [x] `runQuery` - Function for querying. Possibly using dplyr paradigms.
 * [ ] `datasets` - A centralized function for tracking/accessing datasets. Read only store.
+* [/] `gql` - Add ability to return all results (batches).
 
 ### Features
 
