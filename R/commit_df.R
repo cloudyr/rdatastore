@@ -17,8 +17,6 @@
 #'
 #' @export
 
-
-
 commit_df <- function(kind = NULL, name = NULL, df, mutation_type = "upsert", keep_existing = TRUE) {
 
   if (is.null(kind)) {
@@ -27,35 +25,33 @@ commit_df <- function(kind = NULL, name = NULL, df, mutation_type = "upsert", ke
   # Maximum of 25 items can be added at once.
   df_groups <- split(df, (1:nrow(df)) %/% 25)
 
-  sapply(df_groups, function(df) {
-
-    transaction_id <- transaction()
+  sapply(df_groups, function(df_g) {
+    transaction_id <- rdatastore_env$transaction()
     mutation = list()
 
     if (!is.null(name)) {
-      keep_cols = which(!(names(df) == name))
+      keep_cols = which(!(names(df_g) == name))
     } else {
-      keep_cols = 1:length(df)
+      keep_cols = 1:length(df_g)
     }
-
-    data <- lapply(1:nrow(df), function(i) {
+    data <- lapply(1:nrow(df_g), function(i) {
       # If name is null, autoallocate id.
       if (!is.null(name)) {
         if (name == "row.names") {
-          name = row.names(df[i,])[1]
+          name = row.names(df_g[i,])[1]
         } else {
-          name <- df[i,name]$name
+          name <- df_g[i,name]$name
         }
         path_item <- list(
           kind = kind,
-          name = df[i,name]$name
+          name = df_g[i,name]$name
         )
       } else {
         path_item <- list(
           kind = kind
         )
       }
-      properties <- df[i,keep_cols] %>%
+      properties <- df_g[i,keep_cols] %>%
                     unlist() %>%
                     format_to_properties()
 
@@ -65,22 +61,8 @@ commit_df <- function(kind = NULL, name = NULL, df, mutation_type = "upsert", ke
       c(list("upsert" = key_obj))
     })
 
-     body <- list(mutations = c(data[1:nrow(df)]),
-                 transaction = transaction_id
-    )
-
-
-    req <- httr::POST(paste0(rdatastore_env$url, ":commit"),
-                      httr::config(token = rdatastore_env$token),
-                      body =  body,
-                      encode = "json")
-
-
-    # Return transaction id if successful, else error.
-    if (req$status_code == 200) {
-        message("Success")
-    } else {
-      stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
-    }
+     body <- list(mutations = c(data[1:nrow(df_g)]),
+                  transaction = transaction_id)
+    rdatastore_env$commit_ds(the_body = body)
   })
 }

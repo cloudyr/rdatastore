@@ -77,17 +77,34 @@ format_to_properties <- function(properties, existing_data = F) {
 }
 
 
-# Return transaction ID
-transaction <- function() {
-  req <- httr::POST(paste0(rdatastore_env$url, ":beginTransaction"),
-                    httr::config(token = rdatastore_env$token),
-                    encode = "json")
-  if (req$status_code != 200) {
-    stop(httr::content(req)$error$message)
-  }
-  httr::content(req)$transaction
-}
+#===============#
+# Datastore API #
+#===============#
 
+register_api <- function(project) {
+    base_url <- paste0("https://datastore.googleapis.com/v1/projects/", project)
+
+    transaction <- googleAuthR::gar_api_generator(paste0(base_url, ":beginTransaction"),
+                                                  "POST",
+                                                  data_parse_function = function(x) x$transaction)
+
+    commit_ds <- googleAuthR::gar_api_generator(paste0(base_url, ":commit"),
+                                                "POST",
+                                                data_parse_function = function(x) x)
+
+    load_ds <- googleAuthR::gar_api_generator(paste0(base_url, ":lookup"),
+                                              "POST",
+                                              data_parse_function = function(x) x)
+
+    query_ds <- googleAuthR::gar_api_generator(paste0(base_url, ":runQuery"),
+                                               "POST",
+                                               data_parse_function = function(resp) resp)
+
+    assign("transaction", transaction, envir=rdatastore_env)
+    assign("commit_ds", commit_ds, envir=rdatastore_env)
+    assign("load_ds", load_ds, envir=rdatastore_env)
+    assign("query_ds", query_ds, envir=rdatastore_env)
+}
 
 #' Authenticate Datastore using a service account
 #'
@@ -103,7 +120,6 @@ transaction <- function() {
 #'
 #' @export
 
-
 authenticate_datastore_service <- function(credentials, project) {
   # Locate Credentials
   if (file.exists(as.character(credentials))) {
@@ -118,7 +134,7 @@ authenticate_datastore_service <- function(credentials, project) {
                                             credentials,
                                             scope = datastore_url)
 
-  url <- paste0("https://datastore.googleapis.com/v1beta3/projects/", project)
+  url <- paste0("https://datastore.googleapis.com/v1/projects/", project)
   # Create global variable for project id
   assign("project_id", project, envir=rdatastore_env)
   assign("token", google_token, envir=rdatastore_env)
@@ -141,21 +157,11 @@ authenticate_datastore_service <- function(credentials, project) {
 #'
 #' @export
 
-authenticate_datastore <- function(key, secret, project) {
-  # Authorize app
-  app <- httr::oauth_app("google",
-                         key = key,
-                         secret = secret)
-
-  # Fetch token
-  google_token <- httr::oauth2.0_token(httr::oauth_endpoints("google"),
-                                       app,
-                                       scope = datastore_url)
-  url <- paste0("https://datastore.googleapis.com/v1beta3/projects/", project)
-  # Create global variable for project id
+authenticate_datastore <- function(project) {
+  options("googleAuthR.scopes.selected" = c("https://www.googleapis.com/auth/datastore"))
   assign("project_id", project, envir=rdatastore_env)
-  assign("token", google_token, envir=rdatastore_env)
-  assign("url", url, envir=rdatastore_env)
+  register_api(project)
+  googleAuthR::gar_auth()
 }
 
 
@@ -164,8 +170,6 @@ if (Sys.getenv("travis") == TRUE) {
   client_secret <- paste0(find.package("rdatastore"), "/client-secret.json")
   authenticate_datastore_service(client_secret, Sys.getenv("project_id"))
 }
-
-
 
 #' Lookup
 #'
@@ -189,33 +193,27 @@ lookup <- function(kind, name = NULL, id = NULL) {
   }
 
   if (is.null(id)) {
-    lookup_q <- list(kind = kind, name = name)
+    path_item <- list(kind = kind, name = name)
   } else if (is.null(name)) {
-    lookup_q <- list(kind = kind, id = as.character(id))
+    path_item <- list(kind = kind, id = as.character(id))
   } else {
     stop("Must specify name or id. You can not specify both.")
   }
 
-  req <- httr::POST(paste0(rdatastore_env$url, ":lookup"),
-                    httr::config(token = rdatastore_env$token),
-                    body = list(keys = list(path = lookup_q)),
-                    encode = "json")
+  resp <- rdatastore_env$load_ds(the_body = list(keys = list(path = path_item)))
+  if ("found" %in% names(resp)) {
+    resp <- resp$found
+    print(resp)
+    variables <- names(resp$entity$properties)
+    values <- resp$entity$properties
+    results <- resp$entity$properties
 
-  if (req$status_code != 200) {
-    stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
+    # Convert Variable types and return as data frame.
+    results <- format_from_results(results)
+    dplyr::tbl_df(as.data.frame(results, stringsAsFactors = F))  %>%
+      dplyr::mutate(kind = kind, name = name) %>%
+      dplyr::select(kind, name, everything())
   }
-
-  resp <- jsonlite::fromJSON(httr::content(req, as = "text"))$found
-
-  variables <- names(resp$entity$properties)
-  values <- resp$entity$properties
-  results <- resp$entity$properties
-
-  # Convert Variable types and return as data frame.
-  results <- format_from_results(results)
-  dplyr::tbl_df(as.data.frame(results, stringsAsFactors = F))  %>%
-    dplyr::mutate(kind = kind, name = name) %>%
-    dplyr::select(kind, name, everything())
 }
 
 
@@ -253,7 +251,7 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
                      dplyr::select(-kind,-name)
   }
 
-  transaction_id <- transaction()
+  transaction_id <- rdatastore_env$transaction()
 
   # If name is null, autoallocate id.
   if (!is.null(name)) {
@@ -286,28 +284,17 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
   body <- list(mutations = mutation,
                transaction = transaction_id
   )
+  rdatastore_env$commit_ds(the_body = body)
 
+  results <- dplyr::tbl_df(as.data.frame(list(...), stringsAsFactors = F)) %>%
+             dplyr::mutate(kind = kind) %>%
+             dplyr::select(kind, everything())
 
-  req <- httr::POST(paste0(rdatastore_env$url, ":commit"),
-                    httr::config(token = rdatastore_env$token),
-                    body =  body,
-                    encode = "json")
-
-
-  # Return transaction id if successful, else error.
-  if (req$status_code == 200) {
-    results <- dplyr::tbl_df(as.data.frame(list(...), stringsAsFactors = F)) %>%
-               dplyr::mutate(kind = kind) %>%
-               dplyr::select(kind, everything())
-
-    if (!is.null(name)) {
-      results <- dplyr::mutate(results, name = name) %>%
-                 dplyr::select(kind, name, everything())
-    }
-
-    list(content = results,
-         transaction_id = transaction_id)
-  } else {
-    stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
+  if (!is.null(name)) {
+    results <- dplyr::mutate(results, name = name) %>%
+               dplyr::select(kind, name, everything())
   }
+
+  list(content = results,
+       transaction_id = transaction_id)
 }

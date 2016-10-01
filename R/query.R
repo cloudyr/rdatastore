@@ -1,29 +1,19 @@
-
 process_result_set <- function(req) {
-  if (req$status_code == 200) {
-    results <- dplyr::bind_rows(lapply(httr::content(req)$batch$entityResults, function(row) {
-      kind = row$entity$key$path[[1]]$kind
-      if ("name" %in% names(row$entity$key$path[[1]])) {
-        name = row$entity$key$path[[1]]$name
-      } else {
-        name = row$entity$key$path[[1]]$id
-      }
-      row <- format_from_results(row$entity$properties)
-      row$kind = kind
-      row$name = name
-      row
-    }))
 
-    if (nrow(results) > 0) {
-      dplyr::select(results, kind, name, everything())
-    } else {
-      results
+    df <- dplyr::tbl_df(format_from_results(req$batch$entityResults$entity$properties))
+    paths <- dplyr::bind_rows(req$batch$entityResults$entity$key$path)
+    if ("id" %in% names(paths)) {
+      paths$name <- paths$id
     }
+    df <- dplyr::bind_cols(df, paths)
 
-  } else {
-    stop(paste0(httr::content(req)$error$code, ": ", httr::content(req)$error$message))
-  }
+    if (nrow(df) > 0) {
+      dplyr::select(df, kind, name, everything())
+    } else {
+      df
+    }
 }
+
 
 #' gql
 #'
@@ -51,11 +41,8 @@ gql <- function(query) {
   while(all_fetched == "NOT_FINISHED") {
     q <- paste(query, "OFFSET", offset)
     body <- list(gqlQuery = list(queryString = q, allowLiterals = TRUE))
-    req <- httr::POST(paste0(rdatastore_env$url, ":runQuery"),
-                      httr::config(token = rdatastore_env$token),
-                      body =  body,
-                      encode = "json")
-    all_fetched <- httr::content(req)$batch$moreResults
+    req <- rdatastore_env$query_ds(the_body = body)
+    all_fetched <- req$batch$moreResults
     req <- process_result_set(req)
     if (nrow(req) == 0) {
       all_fetched = T
