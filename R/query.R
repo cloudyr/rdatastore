@@ -8,7 +8,7 @@ process_result_set <- function(req) {
     df <- dplyr::bind_cols(df, paths)
 
     if (nrow(df) > 0) {
-      dplyr::select(df, kind, name, everything())
+      dplyr::select(df, kind, name, dplyr::everything())
     } else {
       df
     }
