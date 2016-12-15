@@ -121,24 +121,10 @@ register_api <- function(project) {
 #' @export
 
 authenticate_datastore_service <- function(credentials, project) {
-  # Locate Credentials
-  if (file.exists(as.character(credentials))) {
-    credentials <- jsonlite::fromJSON(credentials)
-  } else if (Sys.getenv(credentials) != "") {
-    credentials <- jsonlite::fromJSON(Sys.getenv(credentials))
-  } else {
-    stop("Could not find credentials")
-  }
-
-  google_token <- httr::oauth_service_token(httr::oauth_endpoints("google"),
-                                            credentials,
-                                            scope = datastore_url)
-
-  url <- paste0("https://datastore.googleapis.com/v1/projects/", project)
-  # Create global variable for project id
-  assign("project_id", project, envir=rdatastore_env)
-  assign("token", google_token, envir=rdatastore_env)
-  assign("url", url, envir=rdatastore_env)
+  options("googleAuthR.scopes.selected" = c("https://www.googleapis.com/auth/datastore"))
+  googleAuthR::gar_auth_service(credentials)
+  register_api(project)
+  googleAuthR::gar_auth()
 }
 
 #' Authenticate Datastore
@@ -147,8 +133,6 @@ authenticate_datastore_service <- function(credentials, project) {
 #' \strong{google cloud platform}
 #' and generate
 #'
-#' @param key OAuth 2.0 credential key
-#' @param secret OAuth credential secret key
 #' @param project Google cloud platform project id/name.
 #'
 #' @seealso \url{https://cloud.google.com/}
