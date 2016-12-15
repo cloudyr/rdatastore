@@ -124,7 +124,6 @@ authenticate_datastore_service <- function(credentials, project) {
   options("googleAuthR.scopes.selected" = c("https://www.googleapis.com/auth/datastore"))
   googleAuthR::gar_auth_service(credentials)
   register_api(project)
-  googleAuthR::gar_auth()
 }
 
 #' Authenticate Datastore
