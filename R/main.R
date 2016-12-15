@@ -195,7 +195,7 @@ lookup <- function(kind, name = NULL, id = NULL) {
     results <- format_from_results(results)
     dplyr::tbl_df(as.data.frame(results, stringsAsFactors = F))  %>%
       dplyr::mutate(kind = kind, name = name) %>%
-      dplyr::select(kind, name, everything())
+      dplyr::select(kind, name, dplyr::everything())
   }
 }
 
@@ -271,11 +271,11 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
 
   results <- dplyr::tbl_df(as.data.frame(list(...), stringsAsFactors = F)) %>%
              dplyr::mutate(kind = kind) %>%
-             dplyr::select(kind, everything())
+             dplyr::select(kind, dplyr::everything())
 
   if (!is.null(name)) {
     results <- dplyr::mutate(results, name = name) %>%
-               dplyr::select(kind, name, everything())
+               dplyr::select(kind, name, dplyr::everything())
   }
 
   list(content = results,
