@@ -12,5 +12,6 @@ Imports:
     lubridate,
     httr,
     jsonlite,
-    base64enc
+    base64enc,
+    googleAuthR
 Suggests: testthat
