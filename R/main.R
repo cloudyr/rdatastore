@@ -233,6 +233,12 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
   if (is.null(rdatastore_env$load_ds)) {
     stop("Please Authenticate")
   }
+
+  # Check to ensure "id" not in ...
+  if ("id" %in% names(list(...))) {
+    stop("Can't use id as a variable name; Use name = NULL to autogenerate id.")
+  }
+
   existing_data <- NA
   if (keep_existing & !is.null(name) & mutation_type != "delete") {
     # Fold in existing values

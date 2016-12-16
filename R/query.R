@@ -55,7 +55,6 @@ gql <- function(query) {
     result_c = result_c + 1
     offset = result_c*300 - 300
   }
-
   # Bind result sets together and return
   dplyr::bind_rows(result_list)
 }
