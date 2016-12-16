@@ -33,7 +33,11 @@ process_result_set <- function(req) {
 
 
 gql <- function(query) {
-  loadNamespace("rdatastore")
+
+  if (is.null(rdatastore_env$load_ds)) {
+    stop("Please Authenticate")
+  }
+
   all_fetched = "NOT_FINISHED"
   result_list <- list()
   result_c <- 1

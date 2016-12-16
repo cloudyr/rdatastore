@@ -19,6 +19,10 @@
 
 commit_df <- function(kind = NULL, name = NULL, df, mutation_type = "upsert", keep_existing = TRUE) {
 
+  if (is.null(rdatastore_env$load_ds)) {
+    stop("Please Authenticate")
+  }
+
   if (is.null(kind)) {
     kind <- deparse(substitute(kind))
   }

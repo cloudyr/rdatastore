@@ -82,6 +82,7 @@ format_to_properties <- function(properties, existing_data = F) {
 #===============#
 
 register_api <- function(project) {
+  loadNamespace("rdatastore")
     base_url <- paste0("https://datastore.googleapis.com/v1/projects/", project)
 
     transaction <- googleAuthR::gar_api_generator(paste0(base_url, ":beginTransaction"),
@@ -171,6 +172,10 @@ if (Sys.getenv("travis") == TRUE) {
 
 lookup <- function(kind, name = NULL, id = NULL) {
 
+  if (is.null(rdatastore_env$load_ds)) {
+    stop("Please Authenticate")
+  }
+
   if(all(is.null(name), is.null(id))) {
     stop("Must specify a name or id. Set name = NULL to auto-allocate id.")
   }
@@ -186,7 +191,6 @@ lookup <- function(kind, name = NULL, id = NULL) {
   resp <- rdatastore_env$load_ds(the_body = list(keys = list(path = path_item)))
   if ("found" %in% names(resp)) {
     resp <- resp$found
-    print(resp)
     variables <- names(resp$entity$properties)
     values <- resp$entity$properties
     results <- resp$entity$properties
@@ -226,15 +230,19 @@ lookup <- function(kind, name = NULL, id = NULL) {
 
 
 commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existing = TRUE) {
-
+  if (is.null(rdatastore_env$load_ds)) {
+    stop("Please Authenticate")
+  }
   existing_data <- NA
   if (keep_existing & !is.null(name) & mutation_type != "delete") {
     # Fold in existing values
-    existing_data <- lookup(kind, name) %>%
-                     dplyr::select(-kind,-name)
+    existing <- lookup(kind, name)
+    if (!is.null(existing)) {
+      existing_data <- lookup(kind, name) %>%
+                       dplyr::select(-kind,-name)
+    }
   }
 
-  transaction_id <- rdatastore_env$transaction()
 
   # If name is null, autoallocate id.
   if (!is.null(name)) {
@@ -263,6 +271,7 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
     mutation[[mutation_type]] =  key_obj
   }
 
+  transaction_id <-  rdatastore_env$transaction()
 
   body <- list(mutations = mutation,
                transaction = transaction_id
