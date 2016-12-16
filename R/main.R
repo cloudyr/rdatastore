@@ -70,6 +70,12 @@ format_to_properties <- function(properties, existing_data = F) {
     } else if (!(typeof(var_value) %in% names(datastore_types))) {
       var_type <- datastore_types$binary
       var_value <- base64enc::base64encode(serialize(var_value, NULL, ascii=T))
+    } else if (is.numeric(var_value)) {
+      if (var_value%%1==0) {
+        var_type <- "integerValue"
+      } else {
+        var_type <- datastore_types[[typeof(var_value)]]
+      }
     } else {
       var_type <- datastore_types[[typeof(var_value)]]
     }
@@ -81,6 +87,14 @@ format_to_properties <- function(properties, existing_data = F) {
   results[!sapply(results, is.null)]
 }
 
+
+convert_integer <- function(col) {
+  # Handle integers special case.
+  if (all(col%%1==0)) {
+    col <- as.integer(col)
+  }
+  col
+}
 
 #===============#
 # Datastore API #
@@ -294,7 +308,8 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
 
   results <- dplyr::tbl_df(as.data.frame(list(...), stringsAsFactors = F)) %>%
              dplyr::mutate(kind = kind) %>%
-             dplyr::select(kind, dplyr::everything())
+             dplyr::select(kind, dplyr::everything()) %>%
+             dplyr::mutate_if(is.numeric, convert_integer)
 
   if (!is.null(name)) {
     results <- dplyr::mutate(results, name = name) %>%
