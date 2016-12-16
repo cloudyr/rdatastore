@@ -238,7 +238,7 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
     # Fold in existing values
     existing <- lookup(kind, name)
     if (!is.null(existing)) {
-      existing_data <- lookup(kind, name) %>%
+      existing_data <- existing %>%
                        dplyr::select(-kind,-name)
     }
   }
@@ -260,6 +260,9 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
   if (length(list(...)) > 0) {
     key_obj <- c(list(key = list(path = path_item),
                   properties = format_to_properties(list(...), existing_data)))
+  } else if (!is.na(existing_data)) {
+    key_obj <- c(list(key = list(path = path_item),
+                      properties = format_to_properties(existing_data)))
   } else {
     key_obj <- c(list(key = list(path = path_item)))
   }
@@ -285,6 +288,11 @@ commit <- function(kind, name = NULL, ..., mutation_type = "upsert", keep_existi
   if (!is.null(name)) {
     results <- dplyr::mutate(results, name = name) %>%
                dplyr::select(kind, name, dplyr::everything())
+  }
+
+  if (!is.null(names(existing_data))) {
+    existing_data <- existing_data[,!names(existing_data) %in% names(results)]
+    results <- results %>% dplyr::bind_cols(existing_data)
   }
 
   list(content = results,
