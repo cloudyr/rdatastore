@@ -14,6 +14,11 @@ format_from_results <- function(results) {
     var_name_set <- names(results[[var_name]])
     var_type <- var_name_set[var_name_set != "meaning"]
 
+    # integer/double comboes become doubles
+    if (setequal(var_type, c("integerValue", "doubleValue"))) {
+      var_type = c("doubleValue") # DROPPING VALUES NEED TO FIX!
+    }
+
     if (var_type == "integerValue") {
       type_conv <- as.integer
     } else if (var_type == "stringValue") {
