@@ -33,19 +33,29 @@ process_result_set <- function(req) {
 
 
 gql <- function(query) {
-
   if (is.null(rdatastore_env$load_ds)) {
     stop("Please Authenticate")
   }
-
   all_fetched = "NOT_FINISHED"
   result_list <- list()
   result_c <- 1
-  offset = 0
+  cursor <- NULL
   while(all_fetched == "NOT_FINISHED") {
-    q <- paste(query, "OFFSET", offset)
-    body <- list(gqlQuery = list(queryString = q, allowLiterals = TRUE))
+    if (!is.null(cursor)) {
+      q <- paste(query, "OFFSET @cursor")
+      nb <- list("cursor" = list("cursor" = cursor))
+      body <- list(gqlQuery = list(queryString = q, allowLiterals = FALSE, namedBindings = nb))
+    } else {
+      q <- query
+      body <- list(gqlQuery = list(queryString = q, allowLiterals = TRUE))
+    }
     req <- rdatastore_env$query_ds(the_body = body)
+    n_results <- nrow(req$batch$entityResults)
+    if (n_results > 0) {
+      cursor <- req$batch$entityResults$cursor[n_results]
+    } else {
+      cursor <- NULL
+    }
     all_fetched <- req$batch$moreResults
     req <- process_result_set(req)
     if (nrow(req) == 0) {
@@ -53,8 +63,8 @@ gql <- function(query) {
     }
     result_list[[result_c]] <- req
     result_c = result_c + 1
-    offset = result_c*300 - 300
   }
+
   # Bind result sets together and return
   dplyr::bind_rows(result_list)
 }
