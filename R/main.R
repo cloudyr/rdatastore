@@ -12,7 +12,7 @@ datastore_types <- list("integer" = "integerValue",
 format_from_results <- function(results) {
   properties <- lapply(names(results), function(var_name, var_value) {
     var_name_set <- names(results[[var_name]])
-    var_type <- var_name_set[var_name_set != "meaning"]
+    var_type <- var_name_set[!(var_name_set %in% c("meaning", "excludeFromIndexes"))]
 
     # integer/double comboes become doubles
     if (setequal(var_type, c("integerValue", "doubleValue"))) {
@@ -42,6 +42,8 @@ format_from_results <- function(results) {
       q_kind <- results[[var_name]]$keyValue$path[[1]]$kind
       q_name  <- results[[var_name]]$keyValue$path[[1]]$name
       results[[var_name]] <- paste0("Key(", q_kind, ", '", q_name,"')")
+    } else if (var_type == "arrayValue") {
+     type_conv <- as.list
     } else {
       warning("Unknown type")
       type_conv <- as.character
